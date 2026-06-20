@@ -1,0 +1,9 @@
+# Python
+__pycache__/
+venv/
+*.sqlite3
+.env
+
+# Node/React
+node_modules/
+dist/
