@@ -1,6 +1,7 @@
 import pytest
 from datetime import datetime, timedelta, timezone
 from src.domain.entities.agendamento import Agendamento
+from src.domain.exceptions.agendamento_exceptions import StatusAgendamentoInvalidoException
 
 def test_deve_permitir_alteracao_com_mais_de_48h_de_antecedencia():
     # Preparação
@@ -25,6 +26,17 @@ def test_maquina_de_estados_nao_deve_concluir_agendamento_sem_estar_confirmado_o
     agendamento = Agendamento("123", "cliente_1", datetime.now(timezone.utc), ["Manicure"])
     agendamento.cancelar() # Forçar o estado para CANCELADO
     
-    # Ação / Verificação
-    with pytest.raises(ValueError, match="O agendamento precisa estar confirmado"):
+    # Ação / Verificação (Substituído ValueError pela nossa exceção customizada)
+    with pytest.raises(StatusAgendamentoInvalidoException, match="O agendamento precisa estar confirmado"):
         agendamento.concluir()
+
+# NOVO TESTE: Provando a correção da máquina de estados
+def test_nao_deve_permitir_confirmar_um_agendamento_ja_concluido():
+    # Preparação
+    agendamento = Agendamento("123", "cliente_1", datetime.now(timezone.utc), ["Cabelo"])
+    agendamento.confirmar()
+    agendamento.concluir() # Estado vai para CONCLUIDO
+    
+    # Ação / Verificação (Substituído ValueError pela nossa exceção customizada)
+    with pytest.raises(StatusAgendamentoInvalidoException, match="Não é possível confirmar um agendamento que já foi concluído"):
+        agendamento.confirmar()

@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import List
 from enum import Enum
+from src.domain.exceptions.agendamento_exceptions import StatusAgendamentoInvalidoException
 
 # Criação de Enum para otimização
 class StatusAgendamento(Enum):
@@ -26,15 +27,18 @@ class Agendamento:
     def confirmar(self):
         # Comparações atualizadas para usar Enum
         if self.status == StatusAgendamento.CANCELADO:
-            raise ValueError("Não é possível confirmar um agendamento cancelado.")
+            # Agora usando a exceção do domínio
+            raise StatusAgendamentoInvalidoException("Não é possível confirmar um agendamento cancelado.")
+        if self.status == StatusAgendamento.CONCLUIDO:
+            raise StatusAgendamentoInvalidoException("Não é possível confirmar um agendamento que já foi concluído.")
         self.status = StatusAgendamento.CONFIRMADO
 
     def concluir(self):
         if self.status != StatusAgendamento.CONFIRMADO:
-            raise ValueError("O agendamento precisa estar confirmado antes de ser concluído.")
+            raise StatusAgendamentoInvalidoException("O agendamento precisa estar confirmado antes de ser concluído.")
         self.status = StatusAgendamento.CONCLUIDO
 
     def cancelar(self):
         if self.status == StatusAgendamento.CONCLUIDO:
-            raise ValueError("Não é possível cancelar um serviço que já foi concluído.")
+            raise StatusAgendamentoInvalidoException("Não é possível cancelar um serviço que já foi concluído.")
         self.status = StatusAgendamento.CANCELADO
