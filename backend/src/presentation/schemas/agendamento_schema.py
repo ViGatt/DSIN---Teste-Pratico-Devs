@@ -16,3 +16,17 @@ class CriarAgendamentoResponse(BaseModel):
     acao_requerida: str | None = None
     data_sugerida: datetime | None = None
     agendamento_id: str | None = None
+
+class AlterarAgendamentoClienteRequest(BaseModel):
+    nova_data: datetime = Field(..., description="Nova data desejada pelo cliente")
+    cliente_id_token: str = Field(..., description="ID do cliente logado tentando alterar")
+
+class AlterarAgendamentoAdminRequest(BaseModel):
+    nova_data: datetime = Field(..., description="Nova data forçada pela administradora")
+
+class DashboardResponse(BaseModel):
+    periodo: dict
+    agendamentos_por_dia: dict
+    servicos_mais_buscados: list
+    horarios_pico: list
+    top_clientes: list
