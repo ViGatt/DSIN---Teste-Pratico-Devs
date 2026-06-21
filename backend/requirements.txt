@@ -1,0 +1,9 @@
+# Testes
+pytest==8.2.0
+
+# API e Servidor
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+
+# Banco de Dados (ORM)
+SQLAlchemy==2.0.30
