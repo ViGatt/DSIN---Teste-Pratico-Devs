@@ -1,17 +1,26 @@
 from datetime import datetime
+from typing import Optional
 from src.application.use_cases.criar_agendamento import CriarAgendamentoUseCase
 from src.domain.entities.agendamento import Agendamento
+from src.domain.interfaces.agendamento_repository import IAgendamentoRepository
 
-#  Fake Repository
-class FakeAgendamentoRepository:
+#  Fake Repository 
+class FakeAgendamentoRepository(IAgendamentoRepository):
     def __init__(self):
         self.agendamentos = []
 
-    def salvar(self, agendamento):
+    def salvar(self, agendamento: Agendamento) -> None:
         self.agendamentos.append(agendamento)
 
-    def buscar_por_cliente_na_semana(self, cliente_id, data_desejada):
-        # Simula a busca: se a Maria já tem um agendamento na nossa lista falsa, devolve
+    # Implementação obrigatória exigida pela interface
+    def buscar_por_id(self, id_agendamento: str) -> Optional[Agendamento]:
+        for ag in self.agendamentos:
+            if ag.id == id_agendamento:
+                return ag
+        return None
+
+    def buscar_por_cliente_na_semana(self, cliente_id: str, data_desejada: datetime) -> Optional[Agendamento]:
+        # Se a Maria já tem um agendamento na nossa lista falsa, devolve
         for ag in self.agendamentos:
             if ag.cliente_id == cliente_id:
                 return ag

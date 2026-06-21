@@ -1,7 +1,8 @@
 from datetime import datetime
+from src.domain.interfaces.agendamento_repository import IAgendamentoRepository
 
 class AlterarAgendamentoAdminUseCase:
-    def __init__(self, agendamento_repository):
+    def __init__(self, agendamento_repository: IAgendamentoRepository):
         self.repository = agendamento_repository
 
     # Não tem 'cliente_id_token' e nem 'data_atual_requisicao' porque a Leila pode alterar tudo.

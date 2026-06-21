@@ -5,8 +5,10 @@ from src.domain.exceptions.agendamento_exceptions import (
     RegraAntecedenciaMinimaException
 )
 
+from src.domain.interfaces.agendamento_repository import IAgendamentoRepository
+
 class AlterarAgendamentoClienteUseCase:
-    def __init__(self, agendamento_repository):
+    def __init__(self, agendamento_repository: IAgendamentoRepository):
         self.repository = agendamento_repository
 
     def executar(self, id_agendamento: str, cliente_id_token: str, nova_data: datetime, data_atual_requisicao: datetime):

@@ -1,10 +1,11 @@
 import uuid
 from datetime import datetime
 from src.domain.entities.agendamento import Agendamento
+from src.domain.interfaces.agendamento_repository import IAgendamentoRepository
 
 #Injeção de dependência
 class CriarAgendamentoUseCase:
-    def __init__(self, agendamento_repository):
+    def __init__(self, agendamento_repository: IAgendamentoRepository):
         self.repository = agendamento_repository
 
     def executar(self, cliente_id: str, data_desejada: datetime, servicos: list, ignorar_sugestao: bool = False):
