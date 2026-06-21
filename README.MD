@@ -56,10 +56,12 @@ Foco em testes unitários automatizados com `pytest` na camada de **Domínio e A
 - [x] **Refactor:** Aplicação do Princípio de Inversão de Dependência (SOLID) com `IAgendamentoRepository`.
 - [x] Cobertura de Testes Unitários nas regras de negócio (11 testes rodando, 100% Passed).
 
-**Backend (Infraestrutura e API) - EM ANDAMENTO**
-- [ ] Configuração do SQLite e SQLAlchemy (Mapeamento de Arrays para JSON).
-- [ ] Implementação dos Repositórios Físicos.
-- [ ] Criação dos Endpoints REST (FastAPI).
+**Backend (Infraestrutura e API) - CONCLUÍDO**
+- [x] Configuração do SQLite e SQLAlchemy.
+- [x] Repositório físico com Mapeamento de Arrays para JSON.
+- [x] Métodos de agregação analítica em Python (Dashboard).
+- [x] Endpoints REST (FastAPI) documentados via Swagger.
+- [x] **Segurança:** Integração de Auth Bearer e blindagem de Schemas.
 
 **Frontend (React) - NA FILA**
 - [ ] Setup do Vite + React + TypeScript.
