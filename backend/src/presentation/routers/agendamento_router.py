@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 from src.infrastructure.database.database import get_db
 from src.infrastructure.repositories.agendamento_repository import AgendamentoRepository
+from src.infrastructure.security.auth import obter_usuario_logado # NOVO IMPORT DE SEGURANÇA
 
 # Imports dos Casos de Uso
 from src.application.use_cases.criar_agendamento import CriarAgendamentoUseCase
@@ -28,7 +29,8 @@ router = APIRouter(prefix="/agendamentos", tags=["Agendamentos"])
 @router.post("/", response_model=CriarAgendamentoResponse, status_code=status.HTTP_200_OK)
 def criar_agendamento(
     requisicao: CriarAgendamentoRequest,
-    db: Session = Depends(get_db)  # FastAPI injeta a sessão do banco automaticamente aqui
+    db: Session = Depends(get_db),  # FastAPI injeta a sessão do banco automaticamente aqui
+    cliente_id_token: str = Depends(obter_usuario_logado) # NOVO: Extrai o ID direto do Header!
 ):
     # Injeção de Dependências manual
     repository = AgendamentoRepository(db)
@@ -37,13 +39,13 @@ def criar_agendamento(
     try:
         # Executa a nossa regra de negócio pura
         resultado = use_case.executar(
-            cliente_id=requisicao.cliente_id,
+            cliente_id=cliente_id_token, # NOVO: Usando o ID inviolável do token
             data_desejada=requisicao.data_desejada,
             servicos=requisicao.servicos,
             ignorar_sugestao=requisicao.ignorar_sugestao
         )
 
-        # 3. Retorna a resposta empacotada
+        # Retorna a resposta empacotada
         # Se a ação for uma "SUGESTAO", o status HTTP continua sendo 200, 
         # pois não é um erro do servidor, é apenas um caminho alternativo .
         return CriarAgendamentoResponse(**resultado)
@@ -59,17 +61,18 @@ def criar_agendamento(
 def alterar_agendamento_cliente(
     id_agendamento: str,
     requisicao: AlterarAgendamentoClienteRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    cliente_id_token: str = Depends(obter_usuario_logado) #Cadeado na alteração
 ):
     repository = AgendamentoRepository(db)
     use_case = AlterarAgendamentoClienteUseCase(repository)
     
     try:
-        # Capturamos a hora exata da requisição para a entidade calcular a regra de 48h
+        # Pega a hora exata da requisição para a entidade calcular a regra de 48h
         data_atual = datetime.now(timezone.utc)
         resultado = use_case.executar(
             id_agendamento=id_agendamento,
-            cliente_id_token=requisicao.cliente_id_token,
+            cliente_id_token=cliente_id_token, # Já usando o ID inviolável
             nova_data=requisicao.nova_data,
             data_atual_requisicao=data_atual
         )
