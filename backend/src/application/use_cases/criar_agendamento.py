@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from src.domain.entities.agendamento import Agendamento
 
@@ -24,7 +25,6 @@ class CriarAgendamentoUseCase:
                 }
 
         # Se não tinha nada na semana OU se ignorou a sugestão
-        import uuid 
         novo_id = str(uuid.uuid4())
         
         novo_agendamento = Agendamento(
@@ -38,6 +38,6 @@ class CriarAgendamentoUseCase:
 
         return {
             "sucesso": True,
-            "mensagem": "Agendamento confirmado com sucesso!",
+            "mensagem": "Agendamento confirmed com sucesso!",
             "agendamento_id": novo_agendamento.id
         }

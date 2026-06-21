@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List
 from enum import Enum
 
@@ -16,11 +16,12 @@ class Agendamento:
         self.data_hora_agendada = data_hora_agendada
         self.servicos = servicos
         self.status = StatusAgendamento.PENDENTE # Ciclo : PENDENTE -> CONFIRMADO -> CONCLUIDO ou CANCELADO / Atualizado para utilizar o Enum
-        self.criado_em = datetime.now()
+        self.criado_em = datetime.now(timezone.utc)
 
     def pode_ser_alterado_pelo_cliente(self, data_atual_da_requisicao: datetime) -> bool:
         tempo_restante = self.data_hora_agendada - data_atual_da_requisicao
-        return tempo_restante >= timedelta(days=2) # True >= 48h Agenda | False < 48h Ligar no salão
+        # Correção: hours=48 alinha com requisito comercial
+        return tempo_restante >= timedelta(hours=48)
         
     def confirmar(self):
         # Comparações atualizadas para usar Enum
