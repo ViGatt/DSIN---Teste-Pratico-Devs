@@ -1,29 +1,60 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@clerk/clerk-react";
-import { fetchMeusAgendamentos, AgendamentoItem } from "@/services/api";
-import { Calendar, Clock, AlertCircle } from "lucide-react";
+import { fetchMeusAgendamentos, AgendamentoItem, cancelarAgendamentoCliente, remarcarAgendamentoCliente } from "@/services/api";
+import { Calendar, AlertCircle, Edit2, Trash2, Check, X } from "lucide-react";
 
 export function MeusAgendamentos() {
   const { getToken } = useAuth();
   const [agendamentos, setAgendamentos] = useState<AgendamentoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [novaDataInput, setNovaDataInput] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const loadHistorico = async () => {
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const lista = await fetchMeusAgendamentos(token);
+      setAgendamentos(lista);
+    } catch (err: any) { 
+      setError(err.message); 
+    } finally { 
+      setLoading(false); 
+    }
+  };
 
   useEffect(() => {
-    const loadHistorico = async () => {
-      try {
-        const token = await getToken();
-        if (!token) throw new Error("Não autenticado");
-        const lista = await fetchMeusAgendamentos(token);
-        setAgendamentos(lista);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadHistorico();
   }, [getToken]);
+
+  const handleCancelar = async (id: string) => {
+    const confirmou = window.confirm("Tem certeza que deseja cancelar este agendamento?");
+    if (!confirmou) return;
+    try {
+      setIsSubmitting(true);
+      const token = await getToken();
+      if (!token) return;
+      await cancelarAgendamentoCliente(token, id);
+      await loadHistorico();
+    } catch (err: any) { alert(err.message); } 
+    finally { setIsSubmitting(false); }
+  };
+
+  const handleRemarcar = async (id: string) => {
+    if (!novaDataInput) return;
+    try {
+      setIsSubmitting(true);
+      const token = await getToken();
+      if (!token) return;
+      await remarcarAgendamentoCliente(token, id, new Date(novaDataInput).toISOString());
+      setEditingId(null);
+      await loadHistorico();
+    } catch (err: any) { alert(err.message); } 
+    finally { setIsSubmitting(false); }
+  };
 
   if (loading) return <div className="p-8 text-center text-zinc-500 animate-pulse">Buscando seu histórico...</div>;
   if (error) return <div className="p-8 text-center text-red-500">Erro: {error}</div>;
@@ -46,7 +77,6 @@ export function MeusAgendamentos() {
           const agora = new Date();
           const horasDiferenca = (dataAgendamento.getTime() - agora.getTime()) / (1000 * 60 * 60);
           
-          // Regra de Negócio: Menos de 48 horas trava a edição no sistema
           const isTravado = horasDiferenca > 0 && horasDiferenca < 48 && ag.status !== "CANCELADO";
           const isPassado = horasDiferenca <= 0;
 
@@ -71,14 +101,42 @@ export function MeusAgendamentos() {
               {!isPassado && ag.status !== "CANCELADO" && (
                 <div className="flex flex-col justify-center items-end text-right">
                   {isTravado ? (
-                    <div className="flex items-center gap-2 text-amber-600 text-sm bg-amber-50 p-2 rounded-lg border border-amber-100">
+                    <div className="flex items-center gap-2 text-amber-600 text-sm bg-amber-50 p-2 rounded-lg border border-amber-100 mt-2">
                       <AlertCircle size={16} />
                       <span className="max-w-[200px]">Faltam menos de 48h. Para alterar, ligue para o salão.</span>
                     </div>
                   ) : (
-                    <button className="text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-3 py-1.5 rounded-md transition-colors border border-emerald-200">
-                      Remarcar / Cancelar
-                    </button>
+                    <div className="flex gap-2 mt-2">
+                      {editingId === ag.id ? (
+                        <div className="flex flex-col items-end gap-2 bg-zinc-50 p-3 rounded-lg border border-zinc-200 shadow-sm">
+                          <input 
+                            type="datetime-local" 
+                            className="border rounded p-1.5 text-sm outline-none w-full bg-white" 
+                            value={novaDataInput} 
+                            onChange={(e) => setNovaDataInput(e.target.value)} 
+                          />
+                          <div className="flex gap-2">
+                            <button onClick={() => handleRemarcar(ag.id)} disabled={isSubmitting} className="p-1.5 bg-emerald-100 text-emerald-700 rounded hover:bg-emerald-200 transition-colors" title="Confirmar nova data"><Check size={16} /></button>
+                            <button onClick={() => { setEditingId(null); setNovaDataInput(""); }} disabled={isSubmitting} className="p-1.5 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors" title="Cancelar edição"><X size={16} /></button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <button 
+                            onClick={() => { setEditingId(ag.id); setNovaDataInput(ag.data_hora_agendada.slice(0, 16)); }} 
+                            className="flex items-center gap-1 text-sm font-medium text-blue-600 hover:bg-blue-50 px-3 py-1.5 rounded-md transition-colors border border-blue-200"
+                          >
+                            <Edit2 size={14} /> Remarcar
+                          </button>
+                          <button 
+                            onClick={() => handleCancelar(ag.id)} 
+                            className="flex items-center gap-1 text-sm font-medium text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-md transition-colors border border-red-200"
+                          >
+                            <Trash2 size={14} /> Cancelar
+                          </button>
+                        </>
+                      )}
+                    </div>
                   )}
                 </div>
               )}

@@ -131,3 +131,26 @@ export const confirmarAgendamentoAdmin = async (token: string, idAgendamento: st
     throw new Error(errorData?.detail || "Falha ao confirmar o agendamento.");
   }
 };
+
+export const cancelarAgendamentoCliente = async (token: string, id: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/agendamentos/${id}`, {
+    method: "DELETE",
+    headers: { "Authorization": `Bearer ${token}` }
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.detail || "Falha ao cancelar.");
+  }
+};
+
+export const remarcarAgendamentoCliente = async (token: string, id: string, novaData: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/agendamentos/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+    body: JSON.stringify({ nova_data: novaData })
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => null);
+    throw new Error(err?.detail || "Falha ao remarcar.");
+  }
+};

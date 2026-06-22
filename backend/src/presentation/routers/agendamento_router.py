@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 from src.application.use_cases.listar_agendamentos import ListarAgendamentosUseCase
 from src.presentation.schemas.agendamento_schema import AgendamentoItemResponse
 from datetime import timedelta
+from datetime import timezone
 
 from src.infrastructure.database.database import get_db
 from src.infrastructure.repositories.agendamento_repository import AgendamentoRepository
@@ -228,3 +229,46 @@ def confirmar_agendamento(
     repository.salvar(agendamento)
     
     return {"message": "Agendamento confirmado com sucesso."}
+
+@router.delete("/{id_agendamento}", status_code=status.HTTP_204_NO_CONTENT)
+def cancelar_agendamento_cliente(
+    id_agendamento: str,
+    db: Session = Depends(get_db),
+    cliente_id: str = Depends(obter_usuario_logado)
+):
+    repository = AgendamentoRepository(db)
+    agendamento = repository.buscar_por_id(id_agendamento)
+    
+    if not agendamento or agendamento.cliente_id != cliente_id:
+        raise HTTPException(status_code=404, detail="Agendamento não encontrado ou não pertence a você.")
+        
+    # Regra de Negócio: Trava de 48h
+    diferenca_horas = (agendamento.data_hora_agendada.replace(tzinfo=timezone.utc) - datetime.now(timezone.utc)).total_seconds() / 3600
+    if diferenca_horas < 48:
+        raise HTTPException(status_code=400, detail="Cancelamento pelo sistema só é permitido com 48h de antecedência.")
+        
+    agendamento.status = "CANCELADO"
+    repository.salvar(agendamento)
+    return None
+
+@router.put("/{id_agendamento}", status_code=status.HTTP_200_OK)
+def remarcar_agendamento_cliente(
+    id_agendamento: str,
+    nova_data: datetime = Body(..., embed=True),
+    db: Session = Depends(get_db),
+    cliente_id: str = Depends(obter_usuario_logado)
+):
+    repository = AgendamentoRepository(db)
+    agendamento = repository.buscar_por_id(id_agendamento)
+    
+    if not agendamento or agendamento.cliente_id != cliente_id:
+        raise HTTPException(status_code=404, detail="Agendamento não encontrado.")
+        
+    # Regra de Negócio: Trava de 48h
+    diferenca_horas = (agendamento.data_hora_agendada.replace(tzinfo=timezone.utc) - datetime.now(timezone.utc)).total_seconds() / 3600
+    if diferenca_horas < 48:
+        raise HTTPException(status_code=400, detail="Alteração de data só é permitida com 48h de antecedência.")
+        
+    agendamento.data_hora_agendada = nova_data
+    repository.salvar(agendamento)
+    return {"message": "Agendamento remarcado com sucesso."}
