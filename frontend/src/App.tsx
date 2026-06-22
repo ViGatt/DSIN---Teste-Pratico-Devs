@@ -5,6 +5,8 @@ import { DatePicker } from "@/components/DatePicker";
 import { ServiceSelection } from "@/components/ServiceSelection"; 
 import { useSchedulingStore } from "@/store/useSchedulingStore";
 import { AdminDashboard } from "@/components/AdminDashboard"; 
+import { useState } from "react";
+import { MeusAgendamentos } from "@/components/MeusAgendamentos";
 
 function App() {
   const clientData = useSchedulingStore((state) => state.clientData);
@@ -13,6 +15,8 @@ function App() {
   
   const { user } = useUser();
   const { getToken } = useAuth();
+
+  const [abaCliente, setAbaCliente] = useState<'novo' | 'historico'>('novo');
 
   const ID_DA_LEILA = "user_3FVfOWRRXJzmoa36szoO7BuE1qt"; 
   const isAdmin = user?.id === ID_DA_LEILA;
@@ -79,57 +83,81 @@ function App() {
           </div>
           
           {isAdmin ? (
-            /*  Só renderiza se o usuário for a Leila */
+            /* Só renderiza se o usuário for a Leila */
             <AdminDashboard />
           ) : (
             /* Renderiza o formulário e oculta o painel */
-            <div className="w-full">
-              {!clientData ? (
-                <CustomerForm />
-              ) : (
-                <div className="space-y-6 w-full animate-in fade-in duration-500 pb-12">
-                  <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg text-sm shadow-sm">
-                    <p className="font-semibold mb-1">✓ Dados confirmados</p>
-                    <p>{clientData.name}</p>
-                    <p>{clientData.phone}</p>
-                  </div>
-                  
-                  <div className="p-6 bg-white border border-zinc-200 rounded-lg shadow-sm w-full">
-                    <h3 className="mb-4 font-semibold text-zinc-900">Escolha a Data</h3>
-                    <DatePicker />
-                  </div>
+            <div className="w-full space-y-6">
+              
+              {/* Menu de Navegação do Cliente */}
+              <div className="flex gap-2 bg-zinc-200/50 p-1 rounded-lg w-full">
+                <button 
+                  onClick={() => setAbaCliente('novo')}
+                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${abaCliente === 'novo' ? 'bg-white shadow-sm text-zinc-900 border border-zinc-200/50' : 'text-zinc-500 hover:text-zinc-700'}`}
+                >
+                  Novo Agendamento
+                </button>
+                <button 
+                  onClick={() => setAbaCliente('historico')}
+                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${abaCliente === 'historico' ? 'bg-white shadow-sm text-zinc-900 border border-zinc-200/50' : 'text-zinc-500 hover:text-zinc-700'}`}
+                >
+                  Meu Histórico
+                </button>
+              </div>
 
-                  {selectedDate && (
-                    <div className="p-6 bg-white border border-zinc-200 rounded-lg shadow-sm w-full animate-in slide-in-from-top-4 duration-500">
-                      <h3 className="mb-4 font-semibold text-zinc-900">Escolha o Serviço</h3>
-                      <ServiceSelection />
-                    </div>
-                  )}
-
-                  {selectedService && (
-                    <div className="p-6 bg-zinc-900 text-white rounded-lg shadow-lg w-full animate-in slide-in-from-bottom-4 duration-500">
-                      <h3 className="mb-4 font-semibold text-zinc-100">Resumo do Agendamento</h3>
-                      <div className="space-y-2 mb-6 text-sm text-zinc-300">
-                        <div className="flex justify-between">
-                          <span>Serviço:</span>
-                          <span className="font-medium text-white">{selectedService}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Data:</span>
-                          <span className="font-medium text-white">
-                            {selectedDate?.toLocaleDateString('pt-BR')}
-                          </span>
-                        </div>
+              {/* Renderização Condicional */}
+              {abaCliente === 'novo' ? (
+                <>
+                  {!clientData ? (
+                    <CustomerForm />
+                  ) : (
+                    <div className="space-y-6 w-full animate-in fade-in duration-500 pb-12">
+                      <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg text-sm shadow-sm">
+                        <p className="font-semibold mb-1">✓ Dados confirmados</p>
+                        <p>{clientData.name}</p>
+                        <p>{clientData.phone}</p>
                       </div>
-                      <Button 
-                        className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold h-12"
-                        onClick={handleFinalize}
-                      >
-                        Confirmar Agendamento
-                      </Button>
+                      
+                      <div className="p-6 bg-white border border-zinc-200 rounded-lg shadow-sm w-full">
+                        <h3 className="mb-4 font-semibold text-zinc-900">Escolha a Data</h3>
+                        <DatePicker />
+                      </div>
+
+                      {selectedDate && (
+                        <div className="p-6 bg-white border border-zinc-200 rounded-lg shadow-sm w-full animate-in slide-in-from-top-4 duration-500">
+                          <h3 className="mb-4 font-semibold text-zinc-900">Escolha o Serviço</h3>
+                          <ServiceSelection />
+                        </div>
+                      )}
+
+                      {selectedService && (
+                        <div className="p-6 bg-zinc-900 text-white rounded-lg shadow-lg w-full animate-in slide-in-from-bottom-4 duration-500">
+                          <h3 className="mb-4 font-semibold text-zinc-100">Resumo do Agendamento</h3>
+                          <div className="space-y-2 mb-6 text-sm text-zinc-300">
+                            <div className="flex justify-between">
+                              <span>Serviço:</span>
+                              <span className="font-medium text-white">{selectedService}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Data:</span>
+                              <span className="font-medium text-white">
+                                {selectedDate?.toLocaleDateString('pt-BR')}
+                              </span>
+                            </div>
+                          </div>
+                          <Button 
+                            className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold h-12"
+                            onClick={handleFinalize}
+                          >
+                            Confirmar Agendamento
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   )}
-                </div>
+                </>
+              ) : (
+                <MeusAgendamentos />
               )}
             </div>
           )}

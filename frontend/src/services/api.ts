@@ -100,3 +100,19 @@ export const restaurarAgendamentoAdmin = async (token: string, idAgendamento: st
     throw new Error(errorData?.detail || "Falha ao restaurar o agendamento.");
   }
 };
+
+export const fetchMeusAgendamentos = async (token: string): Promise<AgendamentoItem[]> => {
+  const response = await fetch(`${API_BASE_URL}/agendamentos/meus`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error("Falha ao carregar o seu histórico de agendamentos.");
+  }
+
+  return response.json();
+};
