@@ -4,22 +4,48 @@ import { CustomerForm } from "@/components/CustomerForm";
 import { DatePicker } from "@/components/DatePicker"; 
 import { ServiceSelection } from "@/components/ServiceSelection"; 
 import { useSchedulingStore } from "@/store/useSchedulingStore"; 
+import { useUser } from "@clerk/clerk-react"; 
+import { supabase } from "@/lib/supabase";
 
 function App() {
   const clientData = useSchedulingStore((state) => state.clientData);
   const selectedDate = useSchedulingStore((state) => state.selectedDate);
   const selectedService = useSchedulingStore((state) => state.selectedService);
+  const { user } = useUser();
 
-  const handleFinalize = () => {
-    const payload = {
-      client: clientData,
-      date: selectedDate,
-      service: selectedService
-    };
-    console.log("Enviando para o banco de dados...", payload);
-    alert("Agendamento confirmado com sucesso!");
+  const handleFinalize = async () => {
+    // Garantir que temos todos os dados
+    if (!user || !clientData || !selectedDate || !selectedService) {
+      alert("Faltam dados para concluir o agendamento.");
+      return;
+    }
+
+    try {
+      // O comando do Supabase para inserir dados
+      const { error } = await supabase
+        .from('agendamentos')
+        .insert([
+          {
+            user_id: user.id, // ID do Clerk
+            client_name: clientData.name,
+            client_phone: clientData.phone,
+            service: selectedService,
+            // O Postgres espera a data em formato ISO (ex: 2026-06-26T14:30:00.000Z)
+            scheduled_date: selectedDate.toISOString(), 
+          }
+        ]);
+
+      if (error) throw error; // Se der erro no banco, cai no catch abaixo
+
+      alert("Agendamento confirmado com sucesso no banco de dados!");
+      
+      window.location.reload(); 
+
+    } catch (error) {
+      console.error("Erro ao salvar no Supabase:", error);
+      alert("Houve um erro ao confirmar seu agendamento. Tente novamente.");
+    }
   };
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-50 p-4">
       
