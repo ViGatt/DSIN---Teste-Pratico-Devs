@@ -116,3 +116,18 @@ export const fetchMeusAgendamentos = async (token: string): Promise<AgendamentoI
 
   return response.json();
 };
+
+export const confirmarAgendamentoAdmin = async (token: string, idAgendamento: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/agendamentos/${idAgendamento}/confirmar/admin`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    throw new Error(errorData?.detail || "Falha ao confirmar o agendamento.");
+  }
+};

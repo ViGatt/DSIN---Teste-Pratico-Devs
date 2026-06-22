@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@clerk/clerk-react";
-import { fetchDashboardMetrics, DashboardData, fetchAgendamentos, AgendamentoItem, remarcarAgendamentoAdmin, cancelarAgendamentoAdmin, restaurarAgendamentoAdmin } from "@/services/api";
+import { fetchDashboardMetrics, DashboardData, fetchAgendamentos, AgendamentoItem, remarcarAgendamentoAdmin, cancelarAgendamentoAdmin, restaurarAgendamentoAdmin, confirmarAgendamentoAdmin } from "@/services/api";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { TrendingUp, Calendar, Users, Edit2, Check, X, Trash2, RotateCcw } from "lucide-react";
+import { TrendingUp, Calendar, Users, Edit2, Check, X, Trash2, RotateCcw, CheckCircle } from "lucide-react";
+
 
 export function AdminDashboard() {
   const { getToken } = useAuth();
@@ -64,6 +65,17 @@ export function AdminDashboard() {
       if (!token) throw new Error("Não autenticado");
       await restaurarAgendamentoAdmin(token, id);
       await loadData();
+    } catch (err: any) { alert(`Erro: ${err.message}`); } 
+    finally { setIsSubmitting(false); }
+  };
+
+    const handleConfirmar = async (id: string) => {
+    try {
+      setIsSubmitting(true);
+      const token = await getToken();
+      if (!token) throw new Error("Não autenticado");
+      await confirmarAgendamentoAdmin(token, id);
+      await loadData(); // Recarrega a tabela
     } catch (err: any) { alert(`Erro: ${err.message}`); } 
     finally { setIsSubmitting(false); }
   };
@@ -168,20 +180,24 @@ export function AdminDashboard() {
                       
                       <td className="px-6 py-4 text-zinc-600 truncate max-w-[150px]">{ag.cliente_id}</td>
                       <td className="px-6 py-4 text-zinc-600">{ag.servicos.join(", ")}</td>
+                      
+                      {/* Coluna do Status com as 3 cores */}
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${ag.status === "CANCELADO" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                          ${ag.status === "CANCELADO" ? "bg-red-100 text-red-800" : 
+                            ag.status === "CONFIRMADO" ? "bg-emerald-100 text-emerald-800" : 
+                            "bg-amber-100 text-amber-800"}`}>
                           {ag.status}
                         </span>
                       </td>
                       
+                      {/* Coluna de Ações */}
                       <td className="px-6 py-4 text-right">
                         {abaAtiva === "cancelados" ? (
-                          // Botão de Restaurar na Lixeira
                           <button onClick={() => handleRestaurar(ag.id)} disabled={isSubmitting} className="p-1.5 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Restaurar Agendamento">
                             <RotateCcw size={16} />
                           </button>
                         ) : (
-                          // Botões Normais (Editar/Cancelar)
                           editingId === ag.id ? (
                             <div className="flex justify-end gap-2">
                               <button onClick={() => handleRemarcar(ag.id)} disabled={isSubmitting} className="p-1.5 bg-emerald-100 text-emerald-700 rounded hover:bg-emerald-200 transition-colors"><Check size={16} /></button>
@@ -189,8 +205,14 @@ export function AdminDashboard() {
                             </div>
                           ) : (
                             <div className="flex justify-end gap-2">
-                              <button onClick={() => { setEditingId(ag.id); setNovaDataInput(ag.data_hora_agendada.slice(0, 16)); }} disabled={isSubmitting} className="p-1.5 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"><Edit2 size={16} /></button>
-                              <button onClick={() => handleCancelar(ag.id, dataFormatada)} disabled={isSubmitting} className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"><Trash2 size={16} /></button>
+                              {/* AQUI ESTÁ O NOVO BOTÃO DE CONFIRMAR */}
+                              {ag.status !== "CONFIRMADO" && (
+                                <button onClick={() => handleConfirmar(ag.id)} disabled={isSubmitting} className="p-1.5 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors" title="Confirmar Agendamento">
+                                  <CheckCircle size={16} />
+                                </button>
+                              )}
+                              <button onClick={() => { setEditingId(ag.id); setNovaDataInput(ag.data_hora_agendada.slice(0, 16)); }} disabled={isSubmitting} className="p-1.5 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Remarcar"><Edit2 size={16} /></button>
+                              <button onClick={() => handleCancelar(ag.id, dataFormatada)} disabled={isSubmitting} className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Cancelar Agendamento"><Trash2 size={16} /></button>
                             </div>
                           )
                         )}
