@@ -208,3 +208,23 @@ def listar_meus_agendamentos(
         }
         for ag in agendamentos
     ]
+
+@router.patch("/{id_agendamento}/confirmar/admin", status_code=status.HTTP_200_OK)
+def confirmar_agendamento(
+    id_agendamento: str,
+    db: Session = Depends(get_db),
+    admin_id: str = Depends(obter_admin_logado)
+):
+    repository = AgendamentoRepository(db)
+    agendamento = repository.buscar_por_id(id_agendamento)
+    
+    if not agendamento:
+        raise HTTPException(status_code=404, detail="Agendamento não encontrado.")
+        
+    if agendamento.status == "CANCELADO":
+        raise HTTPException(status_code=400, detail="Não é possível confirmar um agendamento cancelado.")
+        
+    agendamento.status = "CONFIRMADO"
+    repository.salvar(agendamento)
+    
+    return {"message": "Agendamento confirmado com sucesso."}
