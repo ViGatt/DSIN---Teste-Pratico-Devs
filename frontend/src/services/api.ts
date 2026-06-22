@@ -30,3 +30,27 @@ export const fetchDashboardMetrics = async (token: string, dataReferencia?: Date
 
   return response.json();
 };
+
+export interface AgendamentoItem {
+  id: string;
+  cliente_id: string;
+  data_hora_agendada: string;
+  servicos: string[];
+  status: string;
+}
+
+export const fetchAgendamentos = async (token: string): Promise<AgendamentoItem[]> => {
+  const response = await fetch(`${API_BASE_URL}/agendamentos/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error("Falha ao carregar lista de agendamentos");
+  }
+
+  return response.json();
+};

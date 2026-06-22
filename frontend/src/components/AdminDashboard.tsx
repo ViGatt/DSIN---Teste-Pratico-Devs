@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@clerk/clerk-react";
-import { fetchDashboardMetrics, DashboardData } from "@/services/api";
+import { fetchDashboardMetrics, DashboardData, fetchAgendamentos, AgendamentoItem } from "@/services/api";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { TrendingUp, Calendar, Users } from "lucide-react";
 
 export function AdminDashboard() {
   const { getToken } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
+  const [agendamentosList, setAgendamentosList] = useState<AgendamentoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,8 +17,13 @@ export function AdminDashboard() {
         const token = await getToken();
         if (!token) throw new Error("Acesso negado: Token não encontrado");
 
-        const metrics = await fetchDashboardMetrics(token);
+        const [metrics, lista] = await Promise.all([
+          fetchDashboardMetrics(token),
+          fetchAgendamentos(token)
+        ]);
+        
         setData(metrics);
+        setAgendamentosList(lista);
       } catch (err: any) {
         console.error(err);
         setError(err.message);
@@ -41,10 +47,19 @@ export function AdminDashboard() {
   const totalAgendamentos = chartData.reduce((acc, curr) => acc + curr.agendamentos, 0);
   const servicoTop1 = data.servicos_mais_buscados[0]?.nome || "Nenhum";
 
+  // Deixa a data bonita na tabela
+  const formatarData = (dataIso: string) => {
+    const dataObj = new Date(dataIso);
+    return dataObj.toLocaleString('pt-BR', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    }).replace(',', ' às');
+  };
+
   return (
     <div className="w-full space-y-6 animate-in fade-in duration-500">
       
-      {/* Cards de Resumo (KPIs) */}
+      {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white p-6 rounded-xl border border-zinc-200 shadow-sm flex items-center gap-4">
           <div className="p-3 bg-emerald-100 text-emerald-600 rounded-lg">
@@ -86,13 +101,57 @@ export function AdminDashboard() {
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e4e4e7" />
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#71717a' }} />
               <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: '#71717a' }} />
-              <Tooltip 
-                cursor={{ fill: '#f4f4f5' }}
-                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-              />
+              <Tooltip cursor={{ fill: '#f4f4f5' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
               <Bar dataKey="agendamentos" fill="#10b981" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Tabela de Agendamentos */}
+      <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-zinc-200">
+          <h3 className="text-lg font-bold text-zinc-900">Próximos Agendamentos</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm whitespace-nowrap">
+            <thead className="bg-zinc-50 text-zinc-500">
+              <tr>
+                <th className="px-6 py-4 font-medium">Data e Hora</th>
+                <th className="px-6 py-4 font-medium">Cliente (ID)</th>
+                <th className="px-6 py-4 font-medium">Serviços</th>
+                <th className="px-6 py-4 font-medium">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-200">
+              {agendamentosList.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-8 text-center text-zinc-500">
+                    Nenhum agendamento encontrado para este período.
+                  </td>
+                </tr>
+              ) : (
+                agendamentosList.map((agendamento) => (
+                  <tr key={agendamento.id} className="hover:bg-zinc-50 transition-colors">
+                    <td className="px-6 py-4 font-medium text-zinc-900">
+                      {formatarData(agendamento.data_hora_agendada)}
+                    </td>
+                    <td className="px-6 py-4 text-zinc-600 truncate max-w-[150px]">
+                      {agendamento.cliente_id}
+                    </td>
+                    <td className="px-6 py-4 text-zinc-600">
+                      {agendamento.servicos.join(", ")}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                        {agendamento.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
