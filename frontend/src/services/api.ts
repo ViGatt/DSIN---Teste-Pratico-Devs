@@ -54,3 +54,49 @@ export const fetchAgendamentos = async (token: string): Promise<AgendamentoItem[
 
   return response.json();
 };
+
+export const remarcarAgendamentoAdmin = async (token: string, idAgendamento: string, novaDataIso: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/agendamentos/${idAgendamento}/admin`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({ nova_data: novaDataIso })
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    throw new Error(errorData?.detail || "Falha ao remarcar o agendamento.");
+  }
+};
+
+export const cancelarAgendamentoAdmin = async (token: string, idAgendamento: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/agendamentos/${idAgendamento}/admin`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    throw new Error(errorData?.detail || "Falha ao cancelar o agendamento.");
+  }
+};
+
+export const restaurarAgendamentoAdmin = async (token: string, idAgendamento: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/agendamentos/${idAgendamento}/restaurar/admin`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    throw new Error(errorData?.detail || "Falha ao restaurar o agendamento.");
+  }
+};

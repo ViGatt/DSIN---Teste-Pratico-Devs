@@ -86,20 +86,21 @@ class AgendamentoRepository(IAgendamentoRepository):
     
     #  Metodos para o dashboard
 
-    def _buscar_agendamentos_no_periodo(self, inicio: datetime, fim: datetime):
-        # Buscar todos os registros de uma janela de tempo
-        return self.db.execute(
-            select(AgendamentoModel).where(
-                AgendamentoModel.data_hora_agendada >= inicio,
-                AgendamentoModel.data_hora_agendada <= fim
-            )
-        ).scalars().all()
+    def _buscar_agendamentos_no_periodo(self, inicio: datetime, fim: datetime, ignorar_cancelados: bool = False):
+        query = select(AgendamentoModel).where(
+            AgendamentoModel.data_hora_agendada >= inicio,
+            AgendamentoModel.data_hora_agendada <= fim
+        )
+        
+        if ignorar_cancelados:
+            query = query.where(AgendamentoModel.status != "CANCELADO")
+            
+        return self.db.execute(query).scalars().all()
 
     def contar_agendamentos_por_dia(self, inicio: datetime, fim: datetime) -> dict:
-        agendamentos = self._buscar_agendamentos_no_periodo(inicio, fim)
+        agendamentos = self._buscar_agendamentos_no_periodo(inicio, fim, ignorar_cancelados=True)
         dias_semana = {0: "Segunda", 1: "Terça", 2: "Quarta", 3: "Quinta", 4: "Sexta", 5: "Sábado", 6: "Domingo"}
         
-        # Inicializa todos os dias com zero
         contagem = {dia: 0 for dia in dias_semana.values()}
         
         for ag in agendamentos:
@@ -109,30 +110,27 @@ class AgendamentoRepository(IAgendamentoRepository):
         return contagem
 
     def buscar_servicos_mais_realizados(self, inicio: datetime, fim: datetime) -> list:
-        agendamentos = self._buscar_agendamentos_no_periodo(inicio, fim)
+        agendamentos = self._buscar_agendamentos_no_periodo(inicio, fim, ignorar_cancelados=True)
         contador_servicos = Counter()
         
         for ag in agendamentos:
-            # O SQLAlchemy já nos entrega a coluna JSON como uma lista real do Python
             for servico in ag.servicos:
                 contador_servicos[servico] += 1
                 
-        # Retorna no formato exigido pelo Frontend: [{"nome": "Corte", "quantidade": 5}]
         return [{"nome": nome, "quantidade": qtd} for nome, qtd in contador_servicos.most_common(5)]
 
     def buscar_horarios_de_pico(self, inicio: datetime, fim: datetime) -> list:
-        agendamentos = self._buscar_agendamentos_no_periodo(inicio, fim)
+        agendamentos = self._buscar_agendamentos_no_periodo(inicio, fim, ignorar_cancelados=True)
         contador_horarios = Counter()
         
         for ag in agendamentos:
-            # Formata a hora para o padrão "14:00" ignorando os minutos quebrados para facilitar o agrupamento
             hora_formatada = ag.data_hora_agendada.strftime("%H:00")
             contador_horarios[hora_formatada] += 1
             
         return [hora for hora, _ in contador_horarios.most_common(3)]
 
     def buscar_top_clientes(self, inicio: datetime, fim: datetime) -> list:
-        agendamentos = self._buscar_agendamentos_no_periodo(inicio, fim)
+        agendamentos = self._buscar_agendamentos_no_periodo(inicio, fim, ignorar_cancelados=True)
         contador_clientes = Counter()
         
         for ag in agendamentos:
@@ -144,3 +142,14 @@ class AgendamentoRepository(IAgendamentoRepository):
         models = self._buscar_agendamentos_no_periodo(inicio, fim)
         
         return [self._to_entity(model) for model in models]
+    
+    def deletar(self, id_agendamento: str) -> bool:
+        model = self.db.execute(
+            select(AgendamentoModel).where(AgendamentoModel.id == id_agendamento)
+        ).scalars().first()
+        
+        if model:
+            self.db.delete(model)
+            self.db.commit()
+            return True
+        return False

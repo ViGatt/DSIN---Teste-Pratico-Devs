@@ -153,3 +153,39 @@ def listar_agendamentos(
         ]
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Erro ao listar: {str(e)}")
+
+@router.delete("/{id_agendamento}/admin", status_code=status.HTTP_204_NO_CONTENT)
+def cancelar_agendamento_forcado(
+    id_agendamento: str,
+    db: Session = Depends(get_db),
+    admin_id: str = Depends(obter_admin_logado)
+):
+    repository = AgendamentoRepository(db)
+    agendamento = repository.buscar_por_id(id_agendamento)
+    
+    if not agendamento:
+        raise HTTPException(status_code=404, detail="Agendamento não encontrado.")
+        
+    # SOFT DELETE: Apenas mudamos o status em vez de apagar do banco
+    agendamento.status = "CANCELADO"
+    repository.salvar(agendamento)
+    
+    return None
+
+@router.patch("/{id_agendamento}/restaurar/admin", status_code=status.HTTP_200_OK)
+def restaurar_agendamento(
+    id_agendamento: str,
+    db: Session = Depends(get_db),
+    admin_id: str = Depends(obter_admin_logado)
+):
+    repository = AgendamentoRepository(db)
+    agendamento = repository.buscar_por_id(id_agendamento)
+    
+    if not agendamento:
+        raise HTTPException(status_code=404, detail="Agendamento não encontrado.")
+        
+    # RESTAURAR: Volta o status para pendente
+    agendamento.status = "PENDENTE"
+    repository.salvar(agendamento)
+    
+    return {"message": "Agendamento restaurado com sucesso."}
