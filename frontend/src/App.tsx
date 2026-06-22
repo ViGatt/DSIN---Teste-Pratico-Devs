@@ -1,9 +1,10 @@
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
+import { CustomerForm } from "@/components/CustomerForm"; // Importe seu novo formulário
 
 function App() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-50">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-50 p-4">
       
       {/* O que aparece quando a pessoa NÃO está logada */}
       <SignedOut>
@@ -19,10 +20,14 @@ function App() {
 
       {/* O que aparece quando a pessoa ESTÁ logada */}
       <SignedIn>
-        <div className="text-center space-y-4 bg-white p-8 rounded-xl shadow-sm border border-zinc-200 flex flex-col items-center">
-          <UserButton />
-          <h1 className="text-2xl font-bold text-zinc-900">Bem-vindo(a)!</h1>
-          <p className="text-zinc-500">Você está logado e pronto para agendar.</p>
+        <div className="w-full max-w-md flex flex-col items-center space-y-6">
+          <div className="flex items-center gap-4 bg-white p-4 rounded-lg shadow-sm border w-full justify-between">
+            <span className="font-medium">Bem-vindo(a)!</span>
+            <UserButton />
+          </div>
+          
+          {/* O formulário de dados só aparece aqui */}
+          <CustomerForm />
         </div>
       </SignedIn>
       
