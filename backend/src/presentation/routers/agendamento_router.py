@@ -189,3 +189,22 @@ def restaurar_agendamento(
     repository.salvar(agendamento)
     
     return {"message": "Agendamento restaurado com sucesso."}
+
+@router.get("/meus", response_model=list[AgendamentoItemResponse])
+def listar_meus_agendamentos(
+    db: Session = Depends(get_db),
+    cliente_id: str = Depends(obter_usuario_logado) # CADEADO DO CLIENTE COMUM
+):
+    repository = AgendamentoRepository(db)
+    agendamentos = repository.listar_por_cliente(cliente_id)
+    
+    return [
+        {
+            "id": ag.id,
+            "cliente_id": ag.cliente_id,
+            "data_hora_agendada": ag.data_hora_agendada,
+            "servicos": ag.servicos,
+            "status": ag.status
+        }
+        for ag in agendamentos
+    ]

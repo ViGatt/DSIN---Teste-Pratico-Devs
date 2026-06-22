@@ -153,3 +153,11 @@ class AgendamentoRepository(IAgendamentoRepository):
             self.db.commit()
             return True
         return False
+    def listar_por_cliente(self, cliente_id: str) -> list:
+        models = self.db.execute(
+            select(AgendamentoModel)
+            .where(AgendamentoModel.cliente_id == cliente_id)
+            .order_by(AgendamentoModel.data_hora_agendada.desc())
+        ).scalars().all()
+        
+        return [self._to_entity(model) for model in models]
