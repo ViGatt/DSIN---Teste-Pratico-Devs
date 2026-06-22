@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 from src.infrastructure.database.database import get_db
 from src.infrastructure.repositories.agendamento_repository import AgendamentoRepository
-from src.infrastructure.security.auth import obter_usuario_logado # NOVO IMPORT DE SEGURANÇA
+from src.infrastructure.security.auth import obter_usuario_logado, obter_admin_logado
 
 # Imports dos Casos de Uso
 from src.application.use_cases.criar_agendamento import CriarAgendamentoUseCase
@@ -84,7 +84,8 @@ def alterar_agendamento_cliente(
 def alterar_agendamento_admin(
     id_agendamento: str,
     requisicao: AlterarAgendamentoAdminRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    admin_id: str = Depends(obter_admin_logado) # CADEADO APLICADO
 ):
     repository = AgendamentoRepository(db)
     use_case = AlterarAgendamentoAdminUseCase(repository)
@@ -101,7 +102,8 @@ def alterar_agendamento_admin(
 @router.get("/desempenho", response_model=DashboardResponse)
 def obter_desempenho_semanal(
     data_referencia: datetime = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    admin_id: str = Depends(obter_admin_logado) # CADEADO APLICADO
 ):
     repository = AgendamentoRepository(db)
     use_case = ObterDesempenhoSemanalUseCase(repository)
