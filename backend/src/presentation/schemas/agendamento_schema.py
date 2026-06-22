@@ -29,3 +29,10 @@ class DashboardResponse(BaseModel):
     servicos_mais_buscados: list
     horarios_pico: list
     top_clientes: list
+
+class AgendamentoItemResponse(BaseModel):
+    id: str
+    cliente_id: str
+    data_hora_agendada: datetime
+    servicos: list[str]
+    status: str

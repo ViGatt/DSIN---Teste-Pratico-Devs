@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
+from src.application.use_cases.listar_agendamentos import ListarAgendamentosUseCase
+from src.presentation.schemas.agendamento_schema import AgendamentoItemResponse
+from datetime import timedelta
 
 from src.infrastructure.database.database import get_db
 from src.infrastructure.repositories.agendamento_repository import AgendamentoRepository
@@ -117,3 +120,36 @@ def obter_desempenho_semanal(
         return resultado
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erro ao gerar relatório.")
+    
+@router.get("/", response_model=list[AgendamentoItemResponse])
+def listar_agendamentos(
+    inicio: datetime = None,
+    fim: datetime = None,
+    db: Session = Depends(get_db),
+    admin_id: str = Depends(obter_admin_logado) # CADEADO DA LEILA ATIVADO
+):
+    repository = AgendamentoRepository(db)
+    use_case = ListarAgendamentosUseCase(repository)
+    
+    # Se não filtrar por data, mostramos os últimos 7 dias e os próximos 30
+    if not inicio:
+        inicio = datetime.now(timezone.utc) - timedelta(days=7)
+    if not fim:
+        fim = datetime.now(timezone.utc) + timedelta(days=30)
+        
+    try:
+        agendamentos = use_case.executar(inicio, fim)
+        
+        # Mapeia as Entidades para o Schema do Pydantic
+        return [
+            {
+                "id": ag.id,
+                "cliente_id": ag.cliente_id,
+                "data_hora_agendada": ag.data_hora_agendada,
+                "servicos": ag.servicos,
+                "status": ag.status
+            }
+            for ag in agendamentos
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Erro ao listar: {str(e)}")

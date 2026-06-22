@@ -4,7 +4,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 oauth2_scheme = HTTPBearer()
 
 # ID oficial da Leila no Clerk. 
-ID_DA_LEILA = "user_3FVbbeezitqpZriLOmrOcYBjc8Q" 
+ID_DA_LEILA = "user_3FVfOWRRXJzmoa36szoO7BuE1qt" 
 
 def obter_usuario_logado(request: Request, credenciais: HTTPAuthorizationCredentials = Security(oauth2_scheme)) -> str:
     token = credenciais.credentials

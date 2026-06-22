@@ -139,3 +139,8 @@ class AgendamentoRepository(IAgendamentoRepository):
             contador_clientes[ag.cliente_id] += 1
             
         return [cliente for cliente, _ in contador_clientes.most_common(3)]
+
+    def listar_agendamentos(self, inicio: datetime, fim: datetime) -> list:
+        models = self._buscar_agendamentos_no_periodo(inicio, fim)
+        
+        return [self._to_entity(model) for model in models]
