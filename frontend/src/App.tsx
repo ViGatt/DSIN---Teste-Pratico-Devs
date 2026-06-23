@@ -1,7 +1,7 @@
 import { SignedIn, SignedOut, SignInButton, UserButton, useUser, useAuth } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import { CustomerForm } from "@/components/CustomerForm"; 
-import { DatePicker } from "@/components/DatePicker"; 
+import { DatePickerCustom } from "@/components/ui/DatePickerCustom";
 import { ServiceSelection } from "@/components/ServiceSelection"; 
 import { useSchedulingStore } from "@/store/useSchedulingStore";
 import { AdminDashboard } from "@/components/AdminDashboard"; 
@@ -119,9 +119,14 @@ function App() {
                       </div>
                       
                       <div className="p-6 bg-white border border-zinc-200 rounded-lg shadow-sm w-full">
-                        <h3 className="mb-4 font-semibold text-zinc-900">Escolha a Data</h3>
-                        <DatePicker />
-                      </div>
+                      <h3 className="mb-4 font-semibold text-zinc-900">Escolha a Data</h3>
+                      <DatePickerCustom 
+                      selectedDate={selectedDate} 
+                      onChange={(date) => {
+                        useSchedulingStore.getState().setSelectedDate(date);
+  }} 
+/>
+</div>
 
                       {selectedDate && (
                         <div className="p-6 bg-white border border-zinc-200 rounded-lg shadow-sm w-full animate-in slide-in-from-top-4 duration-500">
@@ -141,7 +146,7 @@ function App() {
                             <div className="flex justify-between">
                               <span>Data:</span>
                               <span className="font-medium text-white">
-                                {selectedDate?.toLocaleDateString('pt-BR')}
+                                {selectedDate?.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
                               </span>
                             </div>
                           </div>
