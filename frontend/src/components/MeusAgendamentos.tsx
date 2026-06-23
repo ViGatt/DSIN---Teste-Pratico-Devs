@@ -14,21 +14,25 @@ export function MeusAgendamentos() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const loadHistorico = async () => {
-    try {
-      const token = await getToken();
-      if (!token) return;
-      const lista = await fetchMeusAgendamentos(token);
-      setAgendamentos(lista);
-    } catch (err: any) { 
-      setError(err.message); 
-    } finally { 
-      setLoading(false); 
-    }
-  };
+  try {
+    const token = await getToken();
+    const response = await fetch(`http://localhost:8000/agendamentos/meus?t=${Date.now()}`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    
+    const data = await response.json();
+    console.log("DADOS QUE O FRONTEND RECEBEU DO BACKEND:", data); // <--- LOG CRÍTICO
+    setAgendamentos(data);
+  } catch (err: any) { 
+    setError(err.message); 
+  } finally { 
+    setLoading(false); 
+  }
+};
 
   useEffect(() => {
-    loadHistorico();
-  }, [getToken]);
+  loadHistorico();
+}, []); 
 
   const handleCancelar = async (id: string) => {
     const confirmou = window.confirm("Tem certeza que deseja cancelar este agendamento?");

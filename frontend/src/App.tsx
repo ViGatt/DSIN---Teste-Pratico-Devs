@@ -162,7 +162,7 @@ function App() {
                   )}
                 </>
               ) : (
-                <MeusAgendamentos />
+                <MeusAgendamentos key={Date.now()} />
               )}
             </div>
           )}
